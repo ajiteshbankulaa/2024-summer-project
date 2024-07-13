@@ -1,0 +1,15 @@
+Don't know how you found this, but this is just a simple project I am making for fun.
+
+Thanks if you are interested in this, and I hope this is interesting or useful.
+
+There are three folders one holds all the data used to test this,
+
+the second holds all the actual iterations of the ML model scripts I used,
+
+and the final folder holds all the scripts I used to clean this.
+
+My script achieved an overall accuracy of 60%, which, in the case of stock market models, is pretty good.
+
+The data was cleaned in Excel and also using the scripts in the cleaning, which mainly uses pandas.
+
+The actual model is based on a random tree classifier, but it is heavily modified through stacking and hypertuning of the parameters.

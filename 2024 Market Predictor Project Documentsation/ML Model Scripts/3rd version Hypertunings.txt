@@ -1,0 +1,23 @@
+
+# Display cross-validation scores
+print(f"Cross-Validation Scores: {cv_scores}")
+print(f"Mean Cross-Validation Accuracy: {cv_scores.mean():.2f}")
+print(f"Standard Deviation of Cross-Validation Accuracy: {cv_scores.std():.2f}")
+
+# Train the stacking model
+stacking_clf.fit(X_train, y_train)
+
+# Evaluate the model on the training set
+train_accuracy = accuracy_score(y_train, stacking_clf.predict(X_train))
+print(f"Training Accuracy: {train_accuracy:.2f}")
+
+# Evaluate the model on the test set
+test_accuracy = accuracy_score(y_test, stacking_clf.predict(X_test))
+print(f"Test Accuracy: {test_accuracy:.2f}")
+
+# Feature importances from the RandomForest base model
+rf_model = stacking_clf.named_estimators_['random_forest']
+feature_importances = rf_model.feature_importances_
+features = X.columns
+for feature, importance in zip(features, feature_importances):
+    print(f"{feature}: {importance:.4f}")

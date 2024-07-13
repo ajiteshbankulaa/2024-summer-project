@@ -1,0 +1,100 @@
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, StackingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.metrics import accuracy_score
+from xgboost import XGBClassifier
+from sklearn.preprocessing import StandardScaler
+
+# Load the data
+data = pd.read_csv('/content/2024 MlAIDataScienceProject ModleTrainingData Version 2.5.csv')
+
+# Prepare the data
+X = data.drop(columns=['Date', 'MUD'])
+y = data['MUD']
+
+# Feature scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# Hyperparameter tuning for RandomForest
+rf_params = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [3, 5, 7],
+    'min_samples_split': [2, 5, 10]
+}
+rf_grid = GridSearchCV(RandomForestClassifier(random_state=42), rf_params, cv=5, n_jobs=-1)
+rf_grid.fit(X_train, y_train)
+best_rf = rf_grid.best_estimator_
+
+# Hyperparameter tuning for GradientBoosting
+gb_params = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [3, 5, 7],
+    'learning_rate': [0.01, 0.1, 0.2]
+}
+gb_grid = GridSearchCV(GradientBoostingClassifier(random_state=42), gb_params, cv=5, n_jobs=-1)
+gb_grid.fit(X_train, y_train)
+best_gb = gb_grid.best_estimator_
+
+# Hyperparameter tuning for LogisticRegression
+lr_params = {
+    'C': [0.1, 1, 10],
+    'solver': ['liblinear', 'lbfgs']
+}
+lr_grid = GridSearchCV(LogisticRegression(max_iter=1000, random_state=42), lr_params, cv=5, n_jobs=-1)
+lr_grid.fit(X_train, y_train)
+best_lr = lr_grid.best_estimator_
+
+# Hyperparameter tuning for XGBoost
+xgb_params = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [3, 5, 7],
+    'learning_rate': [0.01, 0.1, 0.2]
+}
+xgb_grid = GridSearchCV(XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss'), xgb_params, cv=5, n_jobs=-1)
+xgb_grid.fit(X_train, y_train)
+best_xgb = xgb_grid.best_estimator_
+
+# Define the base models with the best estimators
+base_models = [
+    ('random_forest', best_rf),
+    ('gradient_boosting', best_gb),
+    ('logistic_regression', best_lr),
+    ('xgboost', best_xgb)
+]
+
+# Define the meta-model
+meta_model = LogisticRegression(max_iter=1000, random_state=42)
+
+# Define the stacking classifier
+stacking_clf = StackingClassifier(estimators=base_models, final_estimator=meta_model, cv=5)
+
+# Perform cross-validation
+cv_scores = cross_val_score(stacking_clf, X_train, y_train, cv=5, n_jobs=-1)
+
+# Display cross-validation scores
+print(f"Cross-Validation Scores: {cv_scores}")
+print(f"Mean Cross-Validation Accuracy: {cv_scores.mean():.2f}")
+print(f"Standard Deviation of Cross-Validation Accuracy: {cv_scores.std():.2f}")
+
+# Train the stacking model
+stacking_clf.fit(X_train, y_train)
+
+# Evaluate the model on the training set
+train_accuracy = accuracy_score(y_train, stacking_clf.predict(X_train))
+print(f"Training Accuracy: {train_accuracy:.2f}")
+
+# Evaluate the model on the test set
+test_accuracy = accuracy_score(y_test, stacking_clf.predict(X_test))
+print(f"Test Accuracy: {test_accuracy:.2f}")
+
+# Feature importances from the RandomForest base model
+rf_model = stacking_clf.named_estimators_['random_forest']
+feature_importances = rf_model.feature_importances_
+features = X.columns
+for feature, importance in zip(features, feature_importances):
+    print(f"{feature}: {importance:.4f}")

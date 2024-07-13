@@ -1,0 +1,33 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+#Data into Var Data Python nice so no need to figure out which like data stuc and other bs about it it will auto datastructure
+data = pd.read_csv('/content/Training_Set_2024_Market_daily_Model(01.2).csv')
+
+#LIke drop removes the colums we dont need and puts it into Var X and tehn y will have like the answer wheter it went up or down
+X = data.drop(columns=['Date', 'MUD'])
+y = data['MUD']
+
+# Split the data into training and testing sets 80% training 20% Testing need larger training cus yea more data == more acuracy
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize the Random Forest classifier
+RandForest = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Train the model
+RandForest.fit(X_train, y_train)
+
+# Make predictions
+y_pred = RandForest.predict(X_test)
+
+# See how it did hopefuly good
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.2f}")
+
+# SHows how important each like thingy data thingy is to the model
+feature_importances = RandForest.feature_importances_
+features = X.columns
+for feature, importance in zip(features, feature_importances):
+    print(f"{feature}: {importance:.4f}")
